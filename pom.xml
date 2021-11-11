@@ -177,12 +177,12 @@
                 <version>1.6.9</version>
                 <configuration>
                     <container>
-                        <containerId>tomcat8x</containerId>
-                        <home>/Users/maping/apache/tomcat</home>
+                        <containerId>tomcat9x</containerId>
+			 <home>/opt/tomcat/</home>
                     </container>
                     <configuration>
                         <type>existing</type>
-                        <home>/Users/maping/apache/tomcat</home>
+                        <home>/opt/tomcat/</home>
                     </configuration>
                 </configuration>
             </plugin>
