@@ -12,6 +12,8 @@ PRODUCT_SNAPSHOT_NAME=calculator.war
 RESOURCE_NAME=calculator.war
 
 
+# Stop Tomcat
+sudo service tomcat stop
 
 # Shutdown Tomcat
 sudo sh $APACHE_BIN/shutdown.sh
