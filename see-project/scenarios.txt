@@ -1,0 +1,139 @@
+# Scenario 1
+
+## Goal
+Calculate how much is 52 + 48
+
+
+## Pre-conditions
+- The stagining environment has been created and deployed at least once (one working deployment pipeline has been ran on the integration-server for the stagining)   
+
+  
+## Main Success Scenario
+1. Go to "~/<path_to_folder>/calculator/env-stage" and start machine with "vagrant up"
+2. Open in the browser "http://192.168.33.11:8080/calculator/api/calculator/add?x=52&y=48"
+3. If the page is not reachable then
+	- vagrant ssh
+	- cd /vagrant_scripts/
+	- ./deploy-snapshot.sh
+4. Retry "http://192.168.33.11:8080/calculator/api/calculator/add?x=52&y=48"
+5. The JSON file in the webpage should show under "result" the result of the addition! (52 + 48 = 100)
+
+
+
+## Notes
+- You can change in the link the "add" from addition to "mul" for multiplication or "sub" for substraction or "div" for division
+
+
+
+
+
+# Scenario 2
+
+## Goal
+The pipeline is successfully executed for the production environment
+
+
+## Pre-conditions
+- Created project repository on gitlab (calculator)
+- Up and running gitlab & gitlab runner (integration-server / tag: integration)
+- Up and running production environement (env-prod)
+- Created a correct gitlab runner for production environment from readme (tag: env-prod-shell)
+
+  
+## Main Success Scenario
+2. Add or edit '.gitlab-ci.yml' to following content
+
+-------------------------------------------------------------------------------------
+image: maven:3.6.2-jdk-8
+
+variables:
+  STAGE_BASE_URL: "http://192.168.33.11:8080"
+  PROD_BASE_URL: "http://192.168.33.10:8080"
+
+  # This will suppress any download for dependencies and plugins or upload messages which would clutter the console log.
+  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+  MAVEN_OPTS: "-Dhttps.protocols=TLSv1.2 -Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+  # when running from the command line.
+  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
+
+  # Define Tomcat's variables on Staging environment
+  APACHE_HOME: "/opt/tomcat"
+  APACHE_BIN: "$APACHE_HOME/bin"
+  APACHE_WEBAPPS: "$APACHE_HOME/webapps"
+
+  # Define product's variables
+  RESOURCE_NAME: "calculator.war"
+
+stages:
+  - build
+  - unit-test
+  - integration-test
+  - run
+  - upload
+  - deploy
+
+cache:
+  paths:
+    - target/
+
+build_app:
+  stage: build
+  script:
+    - mvn compile
+
+unit_test_app:
+  stage: unit-test
+  script:
+    - mvn test
+
+integration_test_app:
+  stage: integration-test
+  script:
+    - mvn integration-test
+
+run_app:
+  stage: run
+  script:
+    - mvn clean package -Dmaven.test.skip=true
+
+upload_app:
+    stage: upload
+    tags:
+    - integration
+    script:
+    - echo "Deploy review app"
+    artifacts:
+        name: "calculator"
+        paths:
+        - target/*.war
+
+deploy:
+    stage: deploy
+    tags:
+    - env-prod-shell
+    script:  
+    - echo "Stop Tomcat"
+    - sudo service tomcat stop
+    
+    - echo "Shutdown Tomcat"
+    - sudo sh $APACHE_BIN/shutdown.sh
+    
+    - echo "Deploy generated product into the stage-vm-helloworld environment" 
+    - sudo cp target/$RESOURCE_NAME $APACHE_WEBAPPS
+    
+    - echo "Set user asnd group rights"
+    - sudo chown tomcat:tomcat $APACHE_WEBAPPS/$RESOURCE_NAME
+    
+    - echo "Start up Tomcat"
+    - sudo sh $APACHE_BIN/startup.sh
+-------------------------------------------------------------------------------------
+    
+3. Push file to gitlab repository
+4. Go to project's pipelines and wait until the pipeline has finished its execution.
+
+
+## Notes
+- Same can be done for the staging/testing environment. Both are equal. All you need to change is "prod" to "stage".
+- You can then change back and forth between the two deployments (Advise: You should only deploy on production if staging is successful)

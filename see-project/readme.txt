@@ -14,9 +14,9 @@
 
 
 
-# CI server 
+# CI server
 
-## Asset composition
+## Asset composition (calculator/integration-server)
 
 - a vagrant VM specification (i.e. Vagrant file)
 - Ansible playbooks to provision the VM
@@ -26,16 +26,27 @@
 
 # Stage environment
 
-## Asset composition
+## Asset composition (calculator/env-stage)
 - a vagrant VM specification (i.e. Vagrant file)
 - a /scripts folder inside ~/<path_to_folder>/calculator
 
 
 # Production environment
 
-## Asset composition
+## Asset composition (calculator/env-prod)
 - a vagrant VM specification (i.e. Vagrant file)
 - a /scripts folder inside ~/<path_to_folder>/calculator
+
+
+# Scripts
+
+## Asset composition (calculator/scripts)
+- a shell script named "deploy-snapshot.sh"
+- a shell script named "setup-tomcat.sh"
+- a "config" folder containing:
+	- context.xml
+	- tomcat.service
+	- tomcat-users.xml
 
 
 
@@ -321,7 +332,14 @@ deploy:
 
 
 
-2. The pipeline should have run every stage successfully
+2. The pipeline should have run every stage successfully!
+This means that following worked:
+	- build
+	- unit testing
+	- integration testing
+	- packaging
+	- uploading the application (war file)
+	- deploying it in the stage environment
 
 
 # Stage environment
@@ -426,7 +444,14 @@ deploy:
 ...
 
 
-2. The pipeline should have run every stage successfully
+2. The pipeline should have run every stage successfully!
+This means that following worked:
+	- build
+	- unit testing
+	- integration testing
+	- packaging
+	- deploying the application (war file)
+	- deploying it in the production environment
 
 
 
